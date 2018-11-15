@@ -1,12 +1,10 @@
 # coding:utf-8
-import sqlite3
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from sqlalchemy import Column, Integer, String, DateTime, \
-    PickleType, Boolean, Date, BigInteger, ForeignKey, Text, event, func, DECIMAL, or_
+from sqlalchemy import Column, Integer, String
 
 
 class Database(object):
@@ -59,10 +57,9 @@ def set_db():
     config = {
         "bind": 'sqlite:///{}'.format(DB_PATH)
     }
-    print(config['bind'])
-
 
     db = Database(config=config)
+    BaseModel.metadata.create_all(db.engine)
     return db
 
 
