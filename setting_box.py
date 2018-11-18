@@ -4,7 +4,7 @@ import tkinter as tk
 import base64
 import tkinter.messagebox
 
-from db_instance import SalaryEmail
+from .db_instance import SalaryEmail
 
 
 class AccountPasswordWin(tk.Toplevel):
@@ -16,6 +16,7 @@ class AccountPasswordWin(tk.Toplevel):
         self.geometry('300x120')
         self.attributes("-topmost", 1)  # 保持在前
         self.resizable(width=False, height=False)  # 禁制拉伸大小
+        self.parent = parent
         self.db = parent.db
         self.setupUI()
 
@@ -68,6 +69,8 @@ class AccountPasswordWin(tk.Toplevel):
             password.field_value = base64.encodebytes(password_text.encode('utf-8'))
             self.db.session.add_all([sender,password])
             self.db.session.commit()
+            # 更新主窗口信息
+            self.parent.sender_text.set(sender_text)
             tk.messagebox.showinfo(title='success', message='Save Successfully!')
             self.destroy()
         elif len(password_text) <= 0:
@@ -90,6 +93,7 @@ class SMTPPortWin(tk.Toplevel):
         self.geometry('300x120')
         self.attributes("-topmost", 1)  # 保持在前
         self.resizable(width=False, height=False)  # 禁制拉伸大小
+        self.parent = parent
         self.db = parent.db
         self.setupUI()
 
@@ -144,6 +148,8 @@ class SMTPPortWin(tk.Toplevel):
             port.field_value = port_text
             self.db.session.add_all([smtp_server,port])
             self.db.session.commit()
+            self.parent.smtp_text.set(smtp_text)
+            self.parent.port_text.set(port_text)
             tk.messagebox.showinfo(title='success', message='Save Successfully!')
             self.destroy()
         else:
@@ -216,6 +222,9 @@ class InfoWin(tk.Toplevel):
             sign.field_value = sign_text
             self.db.session.add_all([sender_name, sign])
             self.db.session.commit()
+            # 更新主窗口信息
+            self.parent.sender_name_text.set(sender_name_text)
+            self.parent.sign_text.set(sign_text)
             tk.messagebox.showinfo(title='success', message='Save Successfully!')
             self.destroy()
         else:

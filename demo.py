@@ -16,8 +16,10 @@ class PopupDialog(tk.Toplevel):
         row1 = tk.Frame(self)
         row1.pack(fill="x")
         tk.Label(row1, text='姓名：', width=8).pack(side=tk.LEFT)
+        tk.Label(row1)
         self.name = tk.StringVar()
         tk.Entry(row1, textvariable=self.name, width=20).pack(side=tk.LEFT)
+        tk.Label(row1, textvariable=self.name, width=20).pack(side=tk.LEFT)
 
         # 第二行
         row2 = tk.Frame(self)

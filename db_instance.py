@@ -65,6 +65,4 @@ def set_db():
 
 if __name__ == '__main__':
     db = set_db()
-    # db.drop_all()
-    # db.create_all()
     BaseModel.metadata.create_all(db.engine)
