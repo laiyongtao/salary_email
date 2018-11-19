@@ -169,7 +169,7 @@ class InfoWin(tk.Toplevel):
         super(InfoWin, self).__init__()
         self.parent = parent
         self.db = parent.db
-        self.geometry('300x120')
+        self.geometry('500x120')
         self.attributes("-topmost", 1)  # 保持在前
         self.resizable(width=False, height=False)  # 禁制拉伸大小
         self.setupUI()
@@ -196,7 +196,7 @@ class InfoWin(tk.Toplevel):
         row2 = tk.Frame(self)
         row2.pack(fill='x', padx=1, pady=5)
         tk.Label(row2, text='签名/落款：', width=15).pack(side=tk.LEFT)
-        tk.Entry(row2, textvariable=self.sign, width=25).pack(side=tk.LEFT)
+        tk.Entry(row2, textvariable=self.sign, width=50).pack(side=tk.LEFT)
 
         row3 = tk.Frame(self)
         row3.pack(fill='x')
@@ -229,6 +229,68 @@ class InfoWin(tk.Toplevel):
             self.destroy()
         else:
             tk.messagebox.showinfo(title='输入错误', message='请输入正确的配置!')
+
+    def cancel(self):
+        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？")
+        if res:
+            self.destroy()
+
+
+class SysSettingWin(tk.Toplevel):
+    '''系统设置窗口'''
+
+    def __init__(self, parent):
+        super(SysSettingWin, self).__init__()
+        self.title('系统设置')
+        self.geometry('300x120')
+        self.attributes("-topmost", 1)  # 保持在前
+        self.resizable(width=False, height=False)  # 禁制拉伸大小
+        self.parent = parent
+        self.db = parent.db
+        self.setupUI()
+
+    def setupUI(self):
+        '''搭建界面'''
+        self.thread_count = tk.StringVar()
+
+        try:
+            thread_count = self.db.session.query(SalaryEmail).filter(SalaryEmail.field_name=='thread_count').first()
+
+            if thread_count:
+                self.thread_count.set(int(thread_count.field_value))
+        except Exception as e:
+            tk.messagebox.showerror(title="错误", message="数据库错误，请重试！\n{}".format(e))
+
+        row1 = tk.Frame(self)
+        row1.pack(fill='x', padx=1, pady=5)
+        tk.Label(row1, text="发送线程数：", width=15).pack(side=tk.LEFT)
+        tk.Entry(row1, textvariable=self.thread_count, width=25).pack(side=tk.LEFT)
+
+        row3 = tk.Frame(self)
+        row3.pack(fill='x')
+        tk.Button(row3, text='Cancel', command=self.cancel, padx=10, pady=2, width=8).pack(side=tk.RIGHT, padx=10, pady=2)
+        tk.Button(row3, text='Save', command=self.saveBT, padx=10, pady=2, width=8).pack(side=tk.RIGHT, padx=10, pady=2)
+
+    def saveBT(self):
+        thread_count = self.db.session.query(SalaryEmail).filter(SalaryEmail.field_name == 'thread_count').first()
+        if not thread_count:
+            thread_count = SalaryEmail()
+            thread_count.field_name = 'thread_count'
+            thread_count.memo = "发送邮件启动的线程数量"
+        # 验证邮箱格式
+        count = self.thread_count.get()
+        try:
+            int(count)
+        except Exception as e:
+                tk.messagebox.showinfo(title='输入错误', message='请输入正确的数量!')
+                return
+        else:
+            thread_count.field_value = str(abs(int(count)))
+            self.db.session.add(thread_count)
+            self.db.session.commit()
+            self.parent.thread_count.set(abs(int(count))) # 设置进程数量
+            tk.messagebox.showinfo(title='success', message='Save Successfully!')
+            self.destroy()
 
     def cancel(self):
         res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？")

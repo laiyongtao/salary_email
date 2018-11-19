@@ -9,12 +9,14 @@ from email.utils import formataddr
 
 from tkinter import ttk
 from .db_instance import set_db, SalaryEmail
-from .setting_box import AccountPasswordWin, SMTPPortWin, InfoWin
+from .setting_box import AccountPasswordWin, SMTPPortWin, InfoWin, SysSettingWin
 from .parse_execl import ParseExcel
 import tkinter.messagebox
 import tkinter.filedialog
 
 from smtplib import SMTP_SSL, SMTP
+
+DEFAULT_COUNT = 4
 
 class MainWin(tk.Tk):
 
@@ -37,7 +39,11 @@ class MainWin(tk.Tk):
         self.__password = tk.StringVar()
 
         self.done_count = 0  # 完成的邮件数量
-        self.lock = threading.Lock()
+        self.P_count = tk.IntVar()  # 进度条量
+        self.lock = threading.Lock()  # 计数增量线程锁
+        self.gen_lock = threading.Lock()  # 行数据生成器线程锁
+
+        self.thread_count = tk.IntVar() # 发送邮件进程数
 
         self.show_percent = tk.StringVar()  # 显示百分百
         self.show_percent.set('完成百分百：0%')
@@ -80,7 +86,13 @@ class MainWin(tk.Tk):
         settingmenu.add_command(label="账号/密码", command=self.show_account_box)
         settingmenu.add_command(label="SMTP域名/端口", command=self.show_smtp_port_box)
         settingmenu.add_command(label="邮件信息设置", command=self.show_info_box)
+        settingmenu.add_command(label="系统设置", command=self.show_sys_setting_box)
         return menubar
+
+    def show_sys_setting_box(self):
+        '''显示系统设置菜单'''
+        sys_setting_box = SysSettingWin(parent=self)
+        self.wait_window(sys_setting_box)
 
     def show_base_info(self):
         '''显示基本信息'''
@@ -125,9 +137,16 @@ class MainWin(tk.Tk):
         tk.Button(self, command=self.send_email, text='发送', width=20).pack(padx=1, pady=5)
         tk.Label(self, textvariable=self.show_percent ).pack(padx=1, pady=5)
 
+        # 进度条
+        row8 = tk.Frame(self, padx=20, pady=1)
+        row8.pack(fill='x', padx=1, pady=5)
+        self.progressbar = ttk.Progressbar(row8, orient='horizontal', length=545, mode="determinate", variable=self.P_count)
+        self.progressbar.pack(side=tk.LEFT)
+
+
 
         # 发送结果显示框
-        self.result_box = tk.Frame(self, borderwidth=1, padx=20, pady=5)
+        self.result_box = tk.Frame(self, borderwidth=1, padx=20, pady=0)
         self.result_box.pack(fill='x',padx=1, pady=5)
         self.result_list = ttk.Treeview(self.result_box, height=10, show="headings")
         self.result_list['columns'] = ('姓名', "邮箱", '发送结果')
@@ -146,12 +165,12 @@ class MainWin(tk.Tk):
         '''计算完成的任务数'''
         with self.lock:
             self.done_count += 1
+            self.P_count.set(self.done_count)
 
     def show_percent_run(self):
         total_count = self.excel_file.nrows
         current_count = self.done_count
         percent = "%0.1f" % (current_count/float(total_count) * 100)
-        # time.sleep(0.5)
         self.show_percent.set("完成百分百：{}%".format(percent))
 
     def get_salary_file_path(self):
@@ -172,7 +191,10 @@ class MainWin(tk.Tk):
             smtp = self.db.session.query(SalaryEmail).filter(SalaryEmail.field_name=='smtp_server').first()
             smtp_text = smtp.field_value if smtp else ""
             port = self.db.session.query(SalaryEmail).filter(SalaryEmail.field_name=='port').first()
-            port_text = port.field_value if smtp else ""
+            port_text = port.field_value if port else ""
+            thread = self.db.session.query(SalaryEmail).filter(SalaryEmail.field_name=='thread_count').first()
+            thread_count = int(thread.field_value) if thread else DEFAULT_COUNT
+
         except Exception as e:
             tk.messagebox.showerror(title='错误', message='数据库错误！\n{}'.format(e))
             sender_text = ''
@@ -180,12 +202,14 @@ class MainWin(tk.Tk):
             sign_text = ''
             smtp_text = ''
             port_text = ''
+            thread_count = DEFAULT_COUNT
         self.sender_text.set(sender_text)
         self.sender_name_text.set(sender_name_text)
         self.sign_text.set(sign_text)
         self.send_date.set(datetime.datetime.now().strftime("%Y-%m-%d"))
         self.smtp_text.set(smtp_text)
         self.port_text.set(port_text)
+        self.thread_count.set(thread_count)
 
     def send_email(self):
         '''发送邮件'''
@@ -195,6 +219,9 @@ class MainWin(tk.Tk):
                 tk.messagebox.showerror(title='文件错误', message='请选择正确的excel文件！')
                 return
             self.excel_file = ParseExcel(file_name=file_name)
+            # 初始化进度条
+            self.progressbar['maximum'] = self.excel_file.nrows
+            self.P_count.set(0)
         except Exception as e:
             tk.messagebox.showerror(title='文件错误', message='请选择正确的excel文件！\n{}'.format(e))
             return
@@ -206,12 +233,16 @@ class MainWin(tk.Tk):
             return
 
         self.done_count = 0  # 重置计数
-        send_thread = threading.Thread(target=self._send_email)  # 子线程发送邮件
-        send_thread.setDaemon(True)
-        send_thread.start()
+        gen = self.excel_file.iter_salary_line()
+        thread_count = self.thread_count.get() or DEFAULT_COUNT
+        for i in range(thread_count):
+            print(i)
+            send_thread = threading.Thread(target=self._send_email, args=(gen, self.gen_lock))  # 子线程发送邮件
+            send_thread.setDaemon(True)
+            send_thread.start()
 
-    def _send_email(self):
-        ob = SendEmail(self, self.__password.get())
+    def _send_email(self, gen, gen_lock):
+        ob = SendEmail(self, self.__password.get(), gen, gen_lock)
         ob.run()
 
     @staticmethod
@@ -226,12 +257,14 @@ class MainWin(tk.Tk):
             month -= 1
         return year, month
 
+
 class SendEmail(object):
 
-    def __init__(self, win, password):
+    def __init__(self, win, password, gen, gen_lock):
         self.win = win
-        self.excel_file = win.excel_file
         self.__password = password
+        self.gen = gen  # excel文件的生成器
+        self.gen_lock = gen_lock
 
     def send_email(self):
         # 起线程发送邮件，设置发送百分百显示
@@ -245,8 +278,12 @@ class SendEmail(object):
         sign_text = self.win.sign_text.get()
         date = self.win.send_date.get()
 
-        for row in self.excel_file.iter_salary_line():
-            time.sleep(1)
+        while True:
+            try:
+                with self.gen_lock:
+                    row = next(self.gen)
+            except StopIteration:
+                break
             flag = True
             try:
                 self._send_email(smtp=smtp, sender=sender_text, sender_name=sender_name_text, sign=sign_text, date=date, info_row=row)
@@ -260,18 +297,17 @@ class SendEmail(object):
                     pass
             else:
                 pass
+            self.win.count_done_row()
+            self.win.show_percent_run()
             self.win.result_list.insert('', 'end', values=(row[0][1], row[-1][1], "成功！" if flag else "发送失败！！！"))
-            # t = threading.Thread(target=self._send_email, args=(smtp, sender_text, sender_name_text, sign_text, date, row))
-            # t.start()
 
 
     def _send_email(self, smtp, sender, sender_name, sign, date, info_row):
-        # print(threading.enumerate())
+
         msg = self._make_mail_text(sender=sender, sender_name=sender_name, sign=sign, date=date,
                                    info_row=info_row)
         smtp.sendmail(from_addr=sender, to_addrs=[info_row[-1][1]], msg=msg)
-        self.win.count_done_row()
-        self.win.show_percent_run()
+
 
     def _login_smpt(self):
         '''登陆邮箱'''
@@ -343,7 +379,6 @@ class SendEmail(object):
         msg['To'] = formataddr([info_row[0][1].strip(), info_row[-1][1].strip()])
         msg['Subject'] = self.win.subject.get()
         return msg.as_string()
-        # smpt.sendmail(from_addr=sender, to_addrs=[line_msg[-1].strip()], msg=msg.as_string())
 
     def run(self):
         self.send_email()
