@@ -4,7 +4,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*.db
+*.xlsx
+*.xls
 .vscode/
+./demo/*.py
 
 .idea/
 

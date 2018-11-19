@@ -44,13 +44,35 @@ def demo_sleep():
     print('done')
 
 if __name__ == '__main__':
-    print(''' fu
-            主线程：{}
-            子线程：{}
-            '''.format(threading.main_thread(), threading.current_thread()))
 
-    t1 = threading.Thread(target=demo_sleep)
-    t1.start()
-    print(1)
+    def gen():
+        for i in range(100):
+            yield i
 
-    t1.join()
+    def threading_generator_demo(gen):
+
+        # while True:
+        #     try:
+        #         print(next(gen), threading.currentThread())
+        #     except Exception:
+        #         break
+        for i in gen:
+            print(i, threading.currentThread())
+            # time.sleep(0.1)
+
+
+    gen = gen()
+
+
+    for i in range(4):
+        t = threading.Thread(target=threading_generator_demo, args=(gen,))
+        t.start()
+    print(threading.enumerate())
+
+
+
+    # t1 = threading.Thread(target=demo_sleep)
+    # t1.start()
+    # print(1)
+    #
+    # t1.join()
