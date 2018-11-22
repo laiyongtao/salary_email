@@ -297,8 +297,5 @@ class SysSettingWin(tk.Toplevel):
         if res:
             self.destroy()
 
-if __name__ == '__main__':
-    pass
-
 
 

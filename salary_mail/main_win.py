@@ -1,5 +1,4 @@
 import threading
-import time
 import datetime
 import base64
 
@@ -46,7 +45,7 @@ class MainWin(tk.Tk):
         self.thread_count = tk.IntVar() # 发送邮件进程数
 
         self.show_percent = tk.StringVar()  # 显示百分百
-        self.show_percent.set('完成百分百：0%')
+        self.show_percent.set('完成百分比：0%')
 
         self.show_percent_th = threading.Thread(target=self.show_percent_run)
 
