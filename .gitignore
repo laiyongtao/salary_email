@@ -9,7 +9,7 @@ __pycache__/
 *.xls
 .vscode/
 
-./demo/
+demo/
 
 .idea/
 
