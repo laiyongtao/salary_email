@@ -14,6 +14,7 @@ import tkinter.messagebox
 import tkinter.filedialog
 
 from smtplib import SMTP_SSL, SMTP
+from decimal import (Decimal)
 
 DEFAULT_COUNT = 4
 
@@ -360,7 +361,12 @@ class SendEmail(object):
         for l in info_row[:-1]:
             l = str(l[1]).strip()
             if l == "":
-                l = "0"
+                l = "0.00"
+            try:
+                l = Decimal(l).quantize(Decimal('.01'))
+            except Exception:
+                pass
+            l = str(l)
             mail_text += "<td>%s</td>" % l
 
         mail_text += '''
