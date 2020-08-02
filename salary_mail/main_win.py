@@ -23,7 +23,9 @@ class MainWin(tk.Tk):
     def __init__(self):
         super(MainWin, self).__init__()
         self.title('Salary E-mail Main')
-        self.geometry('600x600')
+        x = (self.winfo_screenwidth() // 2) - 300
+        y = (self.winfo_screenheight() // 2) - 300
+        self.geometry('600x600+{}+{}'.format(x, y))
         self.resizable(width=False, height=False)  # 禁制拉伸大小
         self.label_width = 55  # 标签长度
 
@@ -257,6 +259,13 @@ class MainWin(tk.Tk):
             month -= 1
         return year, month
 
+    def get_center(self):
+        px = self.winfo_x()
+        py = self.winfo_y()
+        pw = self.winfo_width()
+        ph = self.winfo_height()
+
+        return (int(px + pw/2), int(py + ph/2))
 
 class SendEmail(object):
 

@@ -13,7 +13,8 @@ class AccountPasswordWin(tk.Toplevel):
     def __init__(self, parent):
         super(AccountPasswordWin, self).__init__()
         self.title('账户设置')
-        self.geometry('300x120')
+        cx, cy = parent.get_center()
+        self.geometry('300x120+{}+{}'.format(cx - 150, cy - 60))
         self.attributes("-topmost", 1)  # 保持在前
         self.resizable(width=False, height=False)  # 禁制拉伸大小
         self.parent = parent
@@ -71,15 +72,15 @@ class AccountPasswordWin(tk.Toplevel):
             self.db.session.commit()
             # 更新主窗口信息
             self.parent.sender_text.set(sender_text)
-            tk.messagebox.showinfo(title='success', message='Save Successfully!')
+            tk.messagebox.showinfo(title='success', message='Save Successfully!', parent=self)
             self.destroy()
         elif len(password_text) <= 0:
-            tk.messagebox.showinfo(title='密码错误', message='密码不能为空!')
+            tk.messagebox.showinfo(title='密码错误', message='密码不能为空!', parent=self)
         elif not re.match(r'[0-9A-Za-z][\.-_0-9A-Za-z]*@[0-9A-Za-z]+(\.[0-9A-Za-z]+)+$', sender_text):
-            tk.messagebox.showinfo(title='邮箱地址错误', message='请输入正确的邮箱地址!')
+            tk.messagebox.showinfo(title='邮箱地址错误', message='请输入正确的邮箱地址!', parent=self)
 
     def cancel(self):
-        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？")
+        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？", parent=self)
         if res:
             self.destroy()
 
@@ -90,7 +91,9 @@ class SMTPPortWin(tk.Toplevel):
     def __init__(self, parent):
         super(SMTPPortWin, self).__init__()
         self.title('SMTP设置')
-        self.geometry('300x120')
+
+        cx, cy = parent.get_center()
+        self.geometry('300x120+{}+{}'.format(cx - 150, cy - 60))
         self.attributes("-topmost", 1)  # 保持在前
         self.resizable(width=False, height=False)  # 禁制拉伸大小
         self.parent = parent
@@ -109,7 +112,7 @@ class SMTPPortWin(tk.Toplevel):
             if port:
                 self.port.set(port.field_value)
         except Exception as e:
-            tk.messagebox.showerror(title="错误", message="数据库错误，请重试！\n{}".format(e))
+            tk.messagebox.showerror(title="错误", message="数据库错误，请重试！\n{}".format(e), parent=self)
 
         row1 = tk.Frame(self)
         row1.pack(fill='x', padx=1, pady=5)
@@ -142,7 +145,7 @@ class SMTPPortWin(tk.Toplevel):
         port_text = self.port.get()
         if len(smtp_text) and len(port_text):
             if str(port_text) not in ('25','465'):
-                tk.messagebox.showinfo(title='端口错误', message='请输入正确的端口号25/465(ssl)!')
+                tk.messagebox.showinfo(title='端口错误', message='请输入正确的端口号25/465(ssl)!', parent=self)
                 return
             smtp_server.field_value = smtp_text
             port.field_value = port_text
@@ -150,14 +153,14 @@ class SMTPPortWin(tk.Toplevel):
             self.db.session.commit()
             self.parent.smtp_text.set(smtp_text)
             self.parent.port_text.set(port_text)
-            tk.messagebox.showinfo(title='success', message='Save Successfully!')
+            tk.messagebox.showinfo(title='success', message='Save Successfully!', parent=self)
             self.destroy()
         else:
-            tk.messagebox.showinfo(title='输入错误', message='请输入正确的配置!')
+            tk.messagebox.showinfo(title='输入错误', message='请输入正确的配置!', parent=self)
 
 
     def cancel(self):
-        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？")
+        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？", parent=self)
         if res:
             self.destroy()
 
@@ -169,7 +172,8 @@ class InfoWin(tk.Toplevel):
         super(InfoWin, self).__init__()
         self.parent = parent
         self.db = parent.db
-        self.geometry('500x120')
+        cx, cy = parent.get_center()
+        self.geometry('500x120+{}+{}'.format(cx - 250, cy - 60))
         self.attributes("-topmost", 1)  # 保持在前
         self.resizable(width=False, height=False)  # 禁制拉伸大小
         self.setupUI()
@@ -186,7 +190,7 @@ class InfoWin(tk.Toplevel):
             if sign:
                 self.sign.set(sign.field_value)
         except Exception as e:
-            tk.messagebox.showerror(title="错误", message="数据库错误，请重试！\n{}".format(e))
+            tk.messagebox.showerror(title="错误", message="数据库错误，请重试！\n{}".format(e), parent=self)
 
         row1 = tk.Frame(self)
         row1.pack(fill='x', padx=1, pady=5)
@@ -225,13 +229,13 @@ class InfoWin(tk.Toplevel):
             # 更新主窗口信息
             self.parent.sender_name_text.set(sender_name_text)
             self.parent.sign_text.set(sign_text)
-            tk.messagebox.showinfo(title='success', message='Save Successfully!')
+            tk.messagebox.showinfo(title='success', message='Save Successfully!', parent=self)
             self.destroy()
         else:
-            tk.messagebox.showinfo(title='输入错误', message='请输入正确的配置!')
+            tk.messagebox.showinfo(title='输入错误', message='请输入正确的配置!', parent=self)
 
     def cancel(self):
-        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？")
+        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？", parent=self)
         if res:
             self.destroy()
 
@@ -242,7 +246,8 @@ class SysSettingWin(tk.Toplevel):
     def __init__(self, parent):
         super(SysSettingWin, self).__init__()
         self.title('系统设置')
-        self.geometry('300x120')
+        cx, cy = parent.get_center()
+        self.geometry('300x120+{}+{}'.format(cx - 150, cy - 60))
         self.attributes("-topmost", 1)  # 保持在前
         self.resizable(width=False, height=False)  # 禁制拉伸大小
         self.parent = parent
@@ -259,7 +264,7 @@ class SysSettingWin(tk.Toplevel):
             if thread_count:
                 self.thread_count.set(int(thread_count.field_value))
         except Exception as e:
-            tk.messagebox.showerror(title="错误", message="数据库错误，请重试！\n{}".format(e))
+            tk.messagebox.showerror(title="错误", message="数据库错误，请重试！\n{}".format(e), parent=self)
 
         row1 = tk.Frame(self)
         row1.pack(fill='x', padx=1, pady=5)
@@ -282,18 +287,18 @@ class SysSettingWin(tk.Toplevel):
         try:
             int(count)
         except Exception as e:
-                tk.messagebox.showinfo(title='输入错误', message='请输入正确的数量!')
+                tk.messagebox.showinfo(title='输入错误', message='请输入正确的数量!', parent=self)
                 return
         else:
             thread_count.field_value = str(abs(int(count)))
             self.db.session.add(thread_count)
             self.db.session.commit()
             self.parent.thread_count.set(abs(int(count))) # 设置进程数量
-            tk.messagebox.showinfo(title='success', message='Save Successfully!')
+            tk.messagebox.showinfo(title='success', message='Save Successfully!', parent=self)
             self.destroy()
 
     def cancel(self):
-        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？")
+        res = tk.messagebox.askyesno(title='是否取消设置？', message="设置的内容未保存，是否退出？", parent=self)
         if res:
             self.destroy()
 
