@@ -26,12 +26,3 @@ class ParseExcel(object):
     @property
     def headers(self):
         return self.__headers
-
-
-
-
-if __name__ == '__main__':
-    p = ParseExcel(file_name='./salary来来来.xlsx')
-
-    for i in p.iter_salary_line():
-        print(i)
