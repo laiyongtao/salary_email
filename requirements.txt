@@ -1,5 +1,5 @@
 altgraph==0.16.1
-future==0.17.1
+future==0.18.3
 macholib==1.11
 pefile==2018.8.8
 PyInstaller==3.4
