@@ -298,6 +298,7 @@ class SendEmail(object):
                 self._send_email(smtp=smtp, sender=sender_text, sender_name=sender_name_text, sign=sign_text, date=date, info_row=row)
             except Exception as e:
                 try:
+                    smtp = self._login_smpt() # 第一次邮件发送失败后，再尝试第二次发送邮件时，重新登录下邮箱
                     self._send_email(smtp=smtp, sender=sender_text, sender_name=sender_name_text, sign=sign_text,
                                      date=date, info_row=row)
                 except Exception as e:
